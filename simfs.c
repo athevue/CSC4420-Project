@@ -79,7 +79,15 @@ main(int argc, char **argv)
                 atoi(argv[optind+2]));
         break;
     case 4: /* writefile */
-        fprintf(stderr, "Error: writefile not yet implemented\n");
+        if (argv[optind] == NULL || argv[optind+1] == NULL || argv[optind+2] == NULL) {
+            fprintf(stderr, "Error: missing arguments for writefile\n");
+            exit(1);
+        }
+
+        writefile(fsname,
+                argv[optind],           // filename
+                atoi(argv[optind+1]),   // start
+                atoi(argv[optind+2]));  // length
         break;
     case 5: /* deletefile */
         if (argv[optind] == NULL) {
