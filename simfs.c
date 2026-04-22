@@ -70,7 +70,13 @@ main(int argc, char **argv)
         //printf("createfile executed successfully"); // Log success message
         break;
     case 3: /* readfile */
-        fprintf(stderr, "Error: readfile not yet implemented\n");
+        if (argv[optind] == NULL || argv[optind+1] == NULL || argv[optind+2] == NULL) {
+            fprintf(stderr, "Error: missing arguments for readfile\n");
+            exit(1);
+        }
+        readfile(fsname, argv[optind],
+                atoi(argv[optind+1]),
+                atoi(argv[optind+2]));
         break;
     case 4: /* writefile */
         fprintf(stderr, "Error: writefile not yet implemented\n");

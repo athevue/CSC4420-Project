@@ -47,6 +47,17 @@ void createfile(char *fsname, char *filename)
     fread(entries, sizeof(fentry), MAXFILES, fp);
 
     // -----------------------------
+    // 1.5 DUPLICATE CHECK (PUT HERE)
+    // -----------------------------
+    for (int i = 0; i < MAXFILES; i++) {
+        if (strcmp(entries[i].name, filename) == 0) {
+            fprintf(stderr, "Error: file already exists\n");
+            closefs(fp);
+            return;
+        }
+    }
+
+    // -----------------------------
     // 2. FIND EMPTY SLOT
     // -----------------------------
     int idx = -1;
@@ -87,8 +98,7 @@ void createfile(char *fsname, char *filename)
     closefs(fp);
 }
 
-
-void deletefile(char *fsname, char *filename)
+void readfile(char *fsname, char *filename, int start, int length)
 {
     FILE *fp = openfs(fsname, "r+b");
 
@@ -113,36 +123,93 @@ void deletefile(char *fsname, char *filename)
         return;
     }
 
+    if (start > entries[idx].size || start + length > entries[idx].size) {
+        fprintf(stderr, "Error: invalid read range\n");
+        closefs(fp);
+        return;
+    }
+
     long data_start = sizeof(fentry) * MAXFILES + sizeof(fnode) * MAXBLOCKS;
 
     int current = entries[idx].firstblock;
+    int offset = start;
 
-    while (current != -1) {
-        int next = nodes[current].nextblock;
-        int block = nodes[current].blockindex;
-
-        // zero out data block
-        char zeros[BLOCKSIZE] = {0};
-        fseek(fp, data_start + block * BLOCKSIZE, SEEK_SET);
-        fwrite(zeros, 1, BLOCKSIZE, fp);
-
-        // mark node as unused
-        nodes[current].blockindex = -1;
-        nodes[current].nextblock = -1;
-
-        current = next;
+    while (offset >= BLOCKSIZE) {
+        current = nodes[current].nextblock;
+        offset -= BLOCKSIZE;
     }
 
-    // clear file entry
-    memset(entries[idx].name, 0, 12);
-    entries[idx].size = 0;
-    entries[idx].firstblock = -1;
+    int bytes_left = length;
+    char buffer[BLOCKSIZE];
 
-    // write back metadata
+    while (current != -1 && bytes_left > 0) {
+        int block = nodes[current].blockindex;
+
+        fseek(fp, data_start + block * BLOCKSIZE, SEEK_SET);
+        fread(buffer, 1, BLOCKSIZE, fp);
+
+        int to_print = BLOCKSIZE - offset;
+        if (to_print > bytes_left)
+            to_print = bytes_left;
+
+        fwrite(buffer + offset, 1, to_print, stdout);
+
+        bytes_left -= to_print;
+        offset = 0;
+
+        current = nodes[current].nextblock;
+    }
+
+    closefs(fp);
+}
+
+void deletefile(char *fsname, char *filename)
+{
+    FILE *fp = openfs(fsname, "r+b");
+
+    fentry entries[MAXFILES];
+    fnode nodes[MAXBLOCKS];
+
+    rewind(fp);
+    fread(entries, sizeof(fentry), MAXFILES, fp);
+    fread(nodes, sizeof(fnode), MAXBLOCKS, fp);
+
+    int found = 0;
+
+    for (int i = 0; i < MAXFILES; i++) {
+        if (strcmp(entries[i].name, filename) == 0) {
+
+            found = 1;
+
+            // free file blocks
+            int current = entries[i].firstblock;
+
+            while (current != -1) {
+                int next = nodes[current].nextblock;
+
+                nodes[current].blockindex = -1;
+                nodes[current].nextblock = -1;
+
+                current = next;
+            }
+
+            // clear entry
+            memset(entries[i].name, 0, 12);
+            entries[i].size = 0;
+            entries[i].firstblock = -1;
+        }
+    }
+
+    if (!found) {
+        fprintf(stderr, "Error: file not found\n");
+        closefs(fp);
+        return;
+    }
+
     rewind(fp);
     fwrite(entries, sizeof(fentry), MAXFILES, fp);
     fwrite(nodes, sizeof(fnode), MAXBLOCKS, fp);
-    fflush(fp);
 
+    fflush(fp);
     closefs(fp);
 }
