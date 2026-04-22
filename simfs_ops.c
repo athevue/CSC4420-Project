@@ -86,3 +86,63 @@ void createfile(char *fsname, char *filename)
     // -----------------------------
     closefs(fp);
 }
+
+
+void deletefile(char *fsname, char *filename)
+{
+    FILE *fp = openfs(fsname, "r+b");
+
+    fentry entries[MAXFILES];
+    fnode nodes[MAXBLOCKS];
+
+    rewind(fp);
+    fread(entries, sizeof(fentry), MAXFILES, fp);
+    fread(nodes, sizeof(fnode), MAXBLOCKS, fp);
+
+    int idx = -1;
+    for (int i = 0; i < MAXFILES; i++) {
+        if (strcmp(entries[i].name, filename) == 0) {
+            idx = i;
+            break;
+        }
+    }
+
+    if (idx == -1) {
+        fprintf(stderr, "Error: file not found\n");
+        closefs(fp);
+        return;
+    }
+
+    long data_start = sizeof(fentry) * MAXFILES + sizeof(fnode) * MAXBLOCKS;
+
+    int current = entries[idx].firstblock;
+
+    while (current != -1) {
+        int next = nodes[current].nextblock;
+        int block = nodes[current].blockindex;
+
+        // zero out data block
+        char zeros[BLOCKSIZE] = {0};
+        fseek(fp, data_start + block * BLOCKSIZE, SEEK_SET);
+        fwrite(zeros, 1, BLOCKSIZE, fp);
+
+        // mark node as unused
+        nodes[current].blockindex = -1;
+        nodes[current].nextblock = -1;
+
+        current = next;
+    }
+
+    // clear file entry
+    memset(entries[idx].name, 0, 12);
+    entries[idx].size = 0;
+    entries[idx].firstblock = -1;
+
+    // write back metadata
+    rewind(fp);
+    fwrite(entries, sizeof(fentry), MAXFILES, fp);
+    fwrite(nodes, sizeof(fnode), MAXBLOCKS, fp);
+    fflush(fp);
+
+    closefs(fp);
+}

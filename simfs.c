@@ -67,6 +67,7 @@ main(int argc, char **argv)
             exit(1);
         }
         createfile(fsname, argv[optind]); // Call createfile with fsname and filename
+        //printf("createfile executed successfully"); // Log success message
         break;
     case 3: /* readfile */
         fprintf(stderr, "Error: readfile not yet implemented\n");
@@ -75,8 +76,13 @@ main(int argc, char **argv)
         fprintf(stderr, "Error: writefile not yet implemented\n");
         break;
     case 5: /* deletefile */
-        fprintf(stderr, "Error: deletefile not yet implemented\n");
-        break;
+        if (argv[optind] == NULL) {
+            fprintf(stderr, "Error: missing filename\n");
+            exit(1);
+        }
+        deletefile(fsname, argv[optind]);
+        printf("deletefile executed successfully"); // Log success message
+    break;
     default:
         fprintf(stderr, "Error: Invalid command\n");
         exit(1);
