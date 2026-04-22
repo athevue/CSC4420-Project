@@ -67,7 +67,7 @@ main(int argc, char **argv)
             exit(1);
         }
         createfile(fsname, argv[optind]); // Call createfile with fsname and filename
-        //printf("createfile executed successfully"); // Log success message
+        printf("createfile executed successfully"); // Log success message
         break;
     case 3: /* readfile */
         if (argv[optind] == NULL || argv[optind+1] == NULL || argv[optind+2] == NULL) {
@@ -77,6 +77,7 @@ main(int argc, char **argv)
         readfile(fsname, argv[optind],
                 atoi(argv[optind+1]),
                 atoi(argv[optind+2]));
+        printf("readfile executed successfully"); // Log success message
         break;
     case 4: /* writefile */
         if (argv[optind] == NULL || argv[optind+1] == NULL || argv[optind+2] == NULL) {
@@ -88,6 +89,7 @@ main(int argc, char **argv)
                 argv[optind],           // filename
                 atoi(argv[optind+1]),   // start
                 atoi(argv[optind+2]));  // length
+        printf("writefile executed successfully"); // Log success message
         break;
     case 5: /* deletefile */
         if (argv[optind] == NULL) {
