@@ -1,65 +1,40 @@
-# Simulated File System (simfs)
+# simfs – Simulated File System
 
-## Overview
-This project is a simplified file system implemented in C. It simulates how an operating system manages files using a single underlying Unix file. The system supports basic file operations such as creating, deleting, reading, and writing files.
+This project is a simple file system built in C as part of CSC 4420. The idea is to simulate how a real operating system stores and manages files, but everything is contained inside a single file on disk (myfs.dat).
 
-The file system contains:
-- A fixed number of file entries (directory-like metadata)
-- A fixed number of file nodes (used to track data blocks)
-- A fixed block size for storing file data
-
-All data is stored inside one file (`myfs.dat`), which acts as the virtual disk.
+Instead of using the normal file system, this project builds its own way of handling files using custom structures and block management.
 
 ---
 
-## Features Implemented
+## What it does
 
-### File Operations
-- `createfile`  
-  Creates a new file in the simulated file system if space is available.
+The system supports basic file operations like creating files, deleting them, writing data, and reading it back. There’s also a command that prints out the internal structure of the file system so you can see what’s going on behind the scenes.
 
-- `deletefile`  
-  Removes a file and frees all associated data blocks.
+The main operations are:
 
-- `writefile`  
-  Writes data from standard input into a file starting at a given offset. Allocates new blocks if needed.
-
-- `readfile`  
-  Reads data from a file starting at a given offset and prints it to standard output.
-
-- `printfs`  
-  Displays the internal structure of the file system (file entries and file nodes).
-
-- `initfs`  
-  Initializes a new simulated file system inside the file.
+- createfile: adds a new file entry if space is available
+- deletefile: removes a file and frees up its blocks
+- writefile: writes data into a file starting at a given offset
+- readfile: reads data from a file and prints it to the screen
+- printfs: shows the current file entries and block layout
+- initfs: initializes a fresh file system inside the data file
 
 ---
 
-## Design Overview
+## How it works (rough idea)
 
-The file system is structured as follows:
+The file system keeps two main things:
 
-- **fentry (file entry):** stores file name, file size, and pointer to first data block.
-- **fnode (file node):** tracks individual data blocks and links them together as a chain.
-- **Data blocks:** actual file contents stored in fixed-size chunks.
+- file entries, which store file names, sizes, and pointers to where the data starts
+- file nodes, which track how data blocks are connected together
 
-Files are stored using a linked-block system, meaning each file may span multiple non-contiguous blocks.
-
----
-
-## Error Handling
-
-The program performs strict error checking:
-- Prevents file creation if no space is available
-- Ensures no invalid file operations are performed
-- Avoids modifying the file system in case of an error
-- Prints errors to `stderr` and exits safely when needed
+Each file is stored in blocks, and those blocks don’t have to be next to each other. Instead, they’re linked together like a chain using the file nodes.
 
 ---
 
-## How to Build
+## Running it
 
-Compile the project using:
+First, build the project:
 
 ```bash
 make
